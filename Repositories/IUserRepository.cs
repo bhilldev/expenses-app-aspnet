@@ -1,16 +1,13 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using expense_tracker_aspnet.Models;
+using ExpensesApp.Models;
 
-namespace expense_tracker_aspnet.Repositories
+namespace ExpensesApp.Repositories
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<User>> GetAllAsync();
-        Task<User> GetByIdAsync(string id);
-        Task<User> GetByUsernameAsync(string username);
+        Task<List<User>> GetAllAsync();
+        Task<User?> GetByIdAsync(string id);
         Task CreateAsync(User user);
-        Task UpdateAsync(User user);
+        Task UpdateAsync(string id, User user);
         Task DeleteAsync(string id);
     }
 }

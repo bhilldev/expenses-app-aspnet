@@ -1,15 +1,12 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using expense_tracker_aspnet.Models;
+using ExpensesApp.Models;
 
-namespace expense_tracker_aspnet.Repositories
+namespace ExpensesApp.Repositories
 {
     public interface ICategoryRepository
     {
-        Task<IEnumerable<Category>> GetByUserIdAsync(string userId);
-        Task<Category> GetByIdAsync(string id);
-        Task CreateAsync(Category category);
-        Task UpdateAsync(Category category);
+        Task<List<Category>> GetAllAsync();
+        Task<Category?> GetByIdAsync(string id);
+        Task AddAsync(Category category);
         Task DeleteAsync(string id);
     }
 }

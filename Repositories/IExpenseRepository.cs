@@ -1,10 +1,12 @@
-// Models/IExpenseRepository.cs
-using expense_tracker_aspnet.Models;
+using ExpensesApp.Models;
 
-public interface IExpenseRepository
+namespace ExpensesApp.Repositories
 {
-    Task<List<Expense>> GetExpensesAsync(string userId);
-    Task<Expense?> GetExpenseAsync(string id);
-    Task AddExpenseAsync(Expense expense);
-    Task DeleteExpenseAsync(string id);
+    public interface IExpenseRepository
+    {
+        Task<List<Expense>> GetAllAsync();
+        Task<Expense?> GetByIdAsync(string id);
+        Task AddAsync(Expense expense);
+        Task DeleteAsync(string id);
+    }
 }

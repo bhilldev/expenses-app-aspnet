@@ -1,54 +1,39 @@
-using ExpensesApp.Models;
 using ExpensesApp.Repositories;
-using Microsoft.Extensions.Options;
+using ExpensesApp.Models;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
-// Bind MongoDB settings
-builder.Services.Configure<DatabaseSettings>(
-    builder.Configuration.GetSection("MongoDB"));
 
-builder.Services.AddSingleton<IMongoClient>(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
-    return new MongoClient(settings.ConnectionString);
-});
+// ===== MongoDB Setup =====
+var connectionString = builder.Configuration.GetConnectionString("MongoDb")
+                       ?? "mongodb://localhost:27017"; // fallback
 
-builder.Services.AddSingleton(sp =>
-{
-    var settings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
-    var client = sp.GetRequiredService<IMongoClient>();
-    return client.GetDatabase(settings.DatabaseName);
-});
+var client = new MongoClient(connectionString);
+var database = client.GetDatabase("ExpenseTracker");
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+// Register MongoDB + repositories
+builder.Services.AddSingleton<IMongoDatabase>(database);
+builder.Services.AddScoped<IRepository<User>>(sp => new Repository<User>(database, "Users"));
+builder.Services.AddScoped<IRepository<Category>>(sp => new Repository<Category>(database, "Categories"));
+builder.Services.AddScoped<IRepository<Expense>>(sp => new Repository<Expense>(database, "Expenses"));
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// ===== ASP.NET Core Setup =====
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// ===== Middleware =====
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
-
 app.UseAuthorization();
-
-app.MapStaticAssets();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+app.MapControllers();
 
 app.Run();
+

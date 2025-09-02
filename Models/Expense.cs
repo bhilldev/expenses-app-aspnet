@@ -7,11 +7,15 @@ namespace ExpensesApp.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string ExpenseId { get; set; } = string.Empty; // 👈 MongoDB document _id
+
+        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonElement("userId")]
+        public string UserId { get; set; } = string.Empty; // 👈 FK to User
 
         [BsonRepresentation(BsonType.ObjectId)]
         [BsonElement("categoryId")]
-        public string CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
 
         [BsonElement("amountCents")]
         public int AmountCents { get; set; }

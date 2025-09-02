@@ -1,4 +1,4 @@
-namespace expense_tracker_aspnet.Models;
+namespace ExpensesApp.Models;
 
 public class ErrorViewModel
 {

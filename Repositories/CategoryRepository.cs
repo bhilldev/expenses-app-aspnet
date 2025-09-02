@@ -1,34 +1,29 @@
-using expense_tracker_aspnet.Models;
-using Microsoft.Extensions.Configuration;
+using ExpensesApp.Models;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace expense_tracker_aspnet.Repositories
+namespace ExpensesApp.Repositories
 {
     public class CategoryRepository : ICategoryRepository
     {
         private readonly IMongoCollection<Category> _categories;
 
-        public CategoryRepository(IConfiguration config, IMongoClient mongoClient)
+        public CategoryRepository(string connectionString, string dbName)
         {
-            var database = mongoClient.GetDatabase(config["MongoSettings:DatabaseName"]);
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase(dbName);
             _categories = database.GetCollection<Category>("Categories");
         }
 
-        public async Task<IEnumerable<Category>> GetByUserIdAsync(string userId) =>
-            await _categories.Find(c => c.UserId == userId).ToListAsync();
+        public async Task<List<Category>> GetAllAsync() =>
+            await _categories.Find(_ => true).ToListAsync();
 
-        public async Task<Category> GetByIdAsync(string id) =>
-            await _categories.Find(c => c.Id == id).FirstOrDefaultAsync();
+        public async Task<Category?> GetByIdAsync(string id) =>
+            await _categories.Find(c => c.CategoryId == id).FirstOrDefaultAsync();
 
-        public async Task CreateAsync(Category category) =>
+        public async Task AddAsync(Category category) =>
             await _categories.InsertOneAsync(category);
 
-        public async Task UpdateAsync(Category category) =>
-            await _categories.ReplaceOneAsync(c => c.Id == category.Id, category);
-
         public async Task DeleteAsync(string id) =>
-            await _categories.DeleteOneAsync(c => c.Id == id);
+            await _categories.DeleteOneAsync(c => c.CategoryId == id);
     }
 }

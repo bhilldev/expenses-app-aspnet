@@ -1,34 +1,29 @@
-// Repositories/ExpenseRepository.cs
+using ExpensesApp.Models;
 using MongoDB.Driver;
-using expense_tracker_aspnet.Models;
 
-public class ExpenseRepository : IExpenseRepository
+namespace ExpensesApp.Repositories
 {
-    private readonly IMongoCollection<Expense> _expenses;
-
-    public ExpenseRepository(IMongoClient mongoClient)
+    public class ExpenseRepository : IExpenseRepository
     {
-        var database = mongoClient.GetDatabase("ExpenseTrackerDb");
-        _expenses = database.GetCollection<Expense>("Expenses");
-    }
+        private readonly IMongoCollection<Expense> _expenses;
 
-    public async Task<List<Expense>> GetExpensesAsync(string userId)
-    {
-        return await _expenses.Find(e => e.UserId == userId).ToListAsync();
-    }
+        public ExpenseRepository(string connectionString, string dbName)
+        {
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase(dbName);
+            _expenses = database.GetCollection<Expense>("Expenses");
+        }
 
-    public async Task<Expense?> GetExpenseAsync(string id)
-    {
-        return await _expenses.Find(e => e.Id == id).FirstOrDefaultAsync();
-    }
+        public async Task<List<Expense>> GetAllAsync() =>
+            await _expenses.Find(_ => true).ToListAsync();
 
-    public async Task AddExpenseAsync(Expense expense)
-    {
-        await _expenses.InsertOneAsync(expense);
-    }
+        public async Task<Expense?> GetByIdAsync(string id) =>
+            await _expenses.Find(e => e.ExpenseId == id).FirstOrDefaultAsync();
 
-    public async Task DeleteExpenseAsync(string id)
-    {
-        await _expenses.DeleteOneAsync(e => e.Id == id);
+        public async Task AddAsync(Expense expense) =>
+            await _expenses.InsertOneAsync(expense);
+
+        public async Task DeleteAsync(string id) =>
+            await _expenses.DeleteOneAsync(e => e.ExpenseId == id);
     }
 }
