@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -9,17 +7,23 @@ namespace ExpensesApp.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string UserId { get; set; }
+        public string Id { get; set; } = null!; // MongoDB primary key
 
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters")]
-        public string Name { get; set; }
+        [BsonElement("username")]
+        public string Username { get; set; } = null!; // Unique username
 
-        [Required(ErrorMessage = "Username is required")]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]
-        public string Username { get; set; }
+        [BsonElement("email")]
+        public string? Email { get; set; } // Optional email
 
-        // Navigation property
-        public ICollection<Category> Categories { get; set; } = new List<Category>();
+        [BsonElement("createdAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Account creation date
+
+        [BsonElement("updatedAt")]
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow; // Last update
+
+        // Optional: You could store a hashed password if needed
+        //[BsonElement("passwordHash")]
+        //public string? PasswordHash { get; set; }
     }
 }
+

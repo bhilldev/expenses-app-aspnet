@@ -5,16 +5,15 @@ namespace ExpensesApp.Models
 {
     public class Category
     {
-        [BsonId]
+        [BsonId] // Primary key for MongoDB
         [BsonRepresentation(BsonType.ObjectId)]
-        public string CategoryId { get; set; }
-
-        [BsonRepresentation(BsonType.ObjectId)]
-        [BsonElement("userId")]
-        public string UserId { get; set; }
+        public string Id { get; set; } = null!;
 
         [BsonElement("name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
+        // Optional: if categories are user-specific
+        [BsonElement("userId")]
+        public string? UserId { get; set; }
     }
 }

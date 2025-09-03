@@ -1,23 +1,23 @@
 using ExpensesApp.Repositories;
-using ExpensesApp.Models;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===== MongoDB Setup =====
-var connectionString = builder.Configuration.GetConnectionString("MongoDb")
-                       ?? "mongodb://localhost:27017"; // fallback
+// ===== Load MongoDB settings safely =====
+var connectionString = builder.Configuration.GetValue<string>("MongoConnectionString")
+                       ?? throw new InvalidOperationException("MongoConnectionString is missing!");
+var databaseName = builder.Configuration.GetValue<string>("DatabaseName")
+                       ?? throw new InvalidOperationException("DatabaseName is missing!");
 
-var client = new MongoClient(connectionString);
-var database = client.GetDatabase("ExpenseTracker");
+// ===== MongoDB client & database =====
+var mongoClient = new MongoClient(connectionString);
+var mongoDatabase = mongoClient.GetDatabase(databaseName);
 
-// Register MongoDB + repositories
-builder.Services.AddSingleton<IMongoDatabase>(database);
-builder.Services.AddScoped<IRepository<User>>(sp => new Repository<User>(database, "Users"));
-builder.Services.AddScoped<IRepository<Category>>(sp => new Repository<Category>(database, "Categories"));
-builder.Services.AddScoped<IRepository<Expense>>(sp => new Repository<Expense>(database, "Expenses"));
+// ===== Register repositories =====
+builder.Services.AddSingleton<IUserRepository>(new UserRepository(mongoDatabase));
+builder.Services.AddSingleton<IExpenseRepository>(new ExpenseRepository(mongoDatabase));
 
-// ===== ASP.NET Core Setup =====
+// ===== Add controllers & Swagger =====
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -27,13 +27,15 @@ var app = builder.Build();
 // ===== Middleware =====
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
-
