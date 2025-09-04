@@ -28,5 +28,7 @@ namespace ExpensesApp.Repositories
 
         public async Task DeleteAsync(string id) =>
             await _users.DeleteOneAsync(u => u.Id == id);
+        public async Task<User?> GetByUsernameAsync(string username) =>
+        await _users.Find(u => u.Username == username).FirstOrDefaultAsync();
     }
 }

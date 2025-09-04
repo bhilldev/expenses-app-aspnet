@@ -11,5 +11,6 @@ namespace ExpensesApp.Repositories
         Task AddAsync(User user);
         Task UpdateAsync(string id, User user);
         Task DeleteAsync(string id);
+        Task<User?> GetByUsernameAsync(string username);
     }
 }

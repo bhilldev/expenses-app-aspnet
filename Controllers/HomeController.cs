@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ExpensesApp.Models;
 using ExpensesApp.Repositories;
 using ExpensesApp.Dtos;
-using MongoDB.Bson;
 
 namespace ExpensesApp.Controllers;
 
@@ -36,24 +36,22 @@ public class AppController : ControllerBase
 
     // ===== USERS =====
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers() => Ok(await _userRepository.GetAllAsync());
+    [Authorize] // Only authenticated users can see all users
+    public async Task<IActionResult> GetUsers() =>
+        Ok(await _userRepository.GetAllAsync());
 
     [HttpPost("users")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
     {
-        // Check for duplicate username
-        var existing = (await _userRepository.GetAllAsync())
-                       .FirstOrDefault(u => u.Username == dto.Username);
-        if (existing != null)
-            return BadRequest("Username is already taken.");
+        // Check if username already exists
+        var existingUser = await _userRepository.GetByUsernameAsync(dto.Username);
+        if (existingUser != null)
+            return BadRequest("Username already exists.");
 
-        // Create new User from DTO
         var user = new User
         {
             Username = dto.Username,
-            Email = dto.Email,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Email = dto.Email
         };
 
         await _userRepository.AddAsync(user);
@@ -62,13 +60,17 @@ public class AppController : ControllerBase
 
     // ===== CATEGORIES =====
     [HttpGet("categories")]
+    [Authorize] // Only authenticated users can access categories
     public IActionResult GetCategories() => Ok(_categories);
 
     // ===== EXPENSES =====
     [HttpGet("expenses")]
-    public async Task<IActionResult> GetExpenses() => Ok(await _expenseRepository.GetAllAsync());
+    [Authorize]
+    public async Task<IActionResult> GetExpenses() =>
+        Ok(await _expenseRepository.GetAllAsync());
 
     [HttpGet("expenses/filter")]
+    [Authorize]
     public async Task<IActionResult> GetExpensesFiltered(
         [FromQuery] string? range = "all",
         [FromQuery] DateTime? start = null,
@@ -86,17 +88,23 @@ public class AppController : ControllerBase
 
         return Ok(expenses);
     }
+
     [HttpPost("expenses")]
+    [Authorize]
     public async Task<IActionResult> CreateExpense([FromBody] CreateExpenseDto dto)
     {
         // Validate category exists
         if (!_categories.Any(c => c.Id == dto.CategoryId))
             return BadRequest("Invalid category ID.");
 
+        // Use user ID from JWT claim if available
+        var userId = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+        if (userId == null)
+            return Unauthorized();
+
         var expense = new Expense
         {
-            Id = ObjectId.GenerateNewId().ToString(), // Generate new MongoDB ObjectId
-            UserId = dto.UserId,
+            UserId = userId,
             CategoryId = dto.CategoryId,
             AmountCents = dto.AmountCents,
             Date = dto.Date,
@@ -106,7 +114,5 @@ public class AppController : ControllerBase
         await _expenseRepository.AddAsync(expense);
         return Ok(expense);
     }
-
 }
-
 
